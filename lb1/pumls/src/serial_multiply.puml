@@ -1,0 +1,16 @@
+@startuml Serial Multiply
+start
+:Получить размер матрицы size;
+repeat
+    :Перебрать строки i от 0 до size;
+    repeat
+        :Перебрать столбцы j от 0 до size;
+        :Инициализировать элемент resultMatrix[i][j] = 0;
+        repeat
+            :Перебрать элементы строки/столбца k от 0 до size;
+            :Выполнить resultMatrix[i][j] += firstMatrix[i][k] * secondMatrix[k][j];
+        repeat while (k < size)
+    repeat while (j < size)
+repeat while (i < size)
+stop
+@enduml

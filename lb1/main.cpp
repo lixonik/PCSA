@@ -1,48 +1,70 @@
-#include <omp.h>
-#include <iostream>
+#include <chrono>
+#include <fstream>
 #include "./matrix_utils/matrix.cpp"
 #include "./parallel_mult_utils/for_multiply.cpp"
 #include "./parallel_mult_utils/manual_multiply.cpp"
 #include "./parallel_mult_utils/serial_multiply.cpp"
 
-#define SIZE 4
+template <typename Function>
+double measure_time(Function fn) {
+   auto start = std::chrono::high_resolution_clock::now();
+   fn();
+   auto end = std::chrono::high_resolution_clock::now();
+   std::chrono::duration<double> duration = end - start;
+   return duration.count();
+}
 
 int main() {
-   Matrix firstMatrix(SIZE), secondMatrix(SIZE);
-   Matrix result_serial(SIZE), result_parallel_for(SIZE),
-       result_parallel_manual(SIZE);
+   std::ofstream results_file("matrix_multiply.csv");
+   results_file << "MatrixSize,Threads,Serial,ParallelFor,ParallelManual\n";
 
-   firstMatrix.initialize();
-   secondMatrix.initialize();
+   int sizes[] = {10, 100, 500, 1000};
+   int threads[] = {2, 4, 8};
 
-   std::cout << "Matrix 1:" << std::endl;
-   firstMatrix.print();
-   std::cout << "Matrix 2:" << std::endl;
-   secondMatrix.print();
+   for (int num_threads : threads) {
+      for (int size : sizes) {
+         std::cout << "Testing matrix size: " << size << " with " << num_threads
+                   << " threads" << std::endl;
 
-   // parallel serial
-   serial_multiply(firstMatrix, secondMatrix, result_serial);
-   std::cout << "\nResult (Serial):" << std::endl;
-   result_serial.print();
+         Matrix firstMatrix(size), secondMatrix(size);
+         Matrix result_serial(size), result_parallel_for(size),
+             result_parallel_manual(size);
 
-   // parallel #pragma omp for
-   for_multiply(firstMatrix, secondMatrix, result_parallel_for);
-   std::cout << "\nResult (Parallel for):" << std::endl;
-   result_parallel_for.print();
+         firstMatrix.initialize();
+         secondMatrix.initialize();
 
-   // parallel manal
-   manual_multiply(firstMatrix, secondMatrix, result_parallel_manual);
-   std::cout << "\nResult (Parallel manual):" << std::endl;
-   result_parallel_manual.print();
+         // Serial multiplication
+         double serial_time = measure_time([&]() {
+            serial_multiply(firstMatrix, secondMatrix, result_serial);
+         });
 
-   // assert
-   if (result_serial.isEqual(result_parallel_for) &&
-       result_serial.isEqual(result_parallel_manual)) {
-      std::cout << "\nAll results are correct and match each other!"
-                << std::endl;
-   } else {
-      std::cout << "\nError: The results do not match!" << std::endl;
+         // Parallel with #pragma omp for
+         double parallel_for_time = measure_time([&]() {
+            for_multiply(firstMatrix, secondMatrix, result_parallel_for,
+                         num_threads);
+         });
+
+         // Parallel manual multiplication
+         double parallel_manual_time = measure_time([&]() {
+            manual_multiply(firstMatrix, secondMatrix, result_parallel_manual,
+                            num_threads);
+         });
+
+         if (result_serial.isEqual(result_parallel_for) &&
+             result_serial.isEqual(result_parallel_manual)) {
+            std::cout << "Results match for size " << size << " and threads "
+                      << num_threads << std::endl;
+         } else {
+            std::cout << "Error: Results do not match for size " << size
+                      << " and threads " << num_threads << std::endl;
+         }
+
+         results_file << size << "," << num_threads << "," << serial_time << ","
+                      << parallel_for_time << "," << parallel_manual_time
+                      << "\n";
+      }
    }
 
+   results_file.close();
    return 0;
 }

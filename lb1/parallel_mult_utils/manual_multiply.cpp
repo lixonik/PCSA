@@ -1,69 +1,30 @@
 #include <omp.h>
 #include "../matrix_utils/matrix.cpp"
 
-#define NUM_THREADS 6
-
 void manual_multiply(const Matrix& firstMatrix, const Matrix& secondMatrix,
-                     Matrix& resultMatrix) {
+                     Matrix& resultMatrix, int num_threads) {
    int size = resultMatrix.getSize();
+   int chunk_size = size / num_threads;
+   int remainder = size % num_threads;
 
-#pragma omp parallel sections num_threads(NUM_THREADS)
+#pragma omp parallel num_threads(num_threads)
    {
-#pragma omp section
-      for (int i = 0; i < size / 6; i++) {
-         for (int j = 0; j < size; j++) {
-            resultMatrix[i][j] = 0;
-            for (int k = 0; k < size; k++) {
-               resultMatrix[i][j] += firstMatrix[i][k] * secondMatrix[k][j];
-            }
-         }
+      int thread_id = omp_get_thread_num();
+      int start_row = thread_id * chunk_size;
+      int end_row = (thread_id + 1) * chunk_size;
+
+      if (thread_id < remainder) {
+         start_row += thread_id;
+         end_row += thread_id + 1;
+      } else {
+         start_row += remainder;
+         end_row += remainder;
       }
 
-#pragma omp section
-      for (int i = size / 6; i < 2 * size / 6; i++) {
-         for (int j = 0; j < size; j++) {
+      for (int i = start_row; i < end_row; ++i) {
+         for (int j = 0; j < size; ++j) {
             resultMatrix[i][j] = 0;
-            for (int k = 0; k < size; k++) {
-               resultMatrix[i][j] += firstMatrix[i][k] * secondMatrix[k][j];
-            }
-         }
-      }
-
-#pragma omp section
-      for (int i = 2 * size / 6; i < 3 * size / 6; i++) {
-         for (int j = 0; j < size; j++) {
-            resultMatrix[i][j] = 0;
-            for (int k = 0; k < size; k++) {
-               resultMatrix[i][j] += firstMatrix[i][k] * secondMatrix[k][j];
-            }
-         }
-      }
-
-#pragma omp section
-      for (int i = 3 * size / 6; i < 4 * size / 6; i++) {
-         for (int j = 0; j < size; j++) {
-            resultMatrix[i][j] = 0;
-            for (int k = 0; k < size; k++) {
-               resultMatrix[i][j] += firstMatrix[i][k] * secondMatrix[k][j];
-            }
-         }
-      }
-
-#pragma omp section
-      for (int i = 4 * size / 6; i < 5 * size / 6; i++) {
-         for (int j = 0; j < size; j++) {
-            resultMatrix[i][j] = 0;
-            for (int k = 0; k < size; k++) {
-               resultMatrix[i][j] += firstMatrix[i][k] * secondMatrix[k][j];
-            }
-         }
-      }
-
-#pragma omp section
-      for (int i = 5 * size / 6; i < size; i++) {
-         for (int j = 0; j < size; j++) {
-            resultMatrix[i][j] = 0;
-            for (int k = 0; k < size; k++) {
+            for (int k = 0; k < size; ++k) {
                resultMatrix[i][j] += firstMatrix[i][k] * secondMatrix[k][j];
             }
          }

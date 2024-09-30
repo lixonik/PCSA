@@ -1,0 +1,26 @@
+@startuml Manual Multiply
+start
+:Получить размер матрицы size;
+:Рассчитать chunk_size = size / num_threads;
+:Рассчитать remainder = size % num_threads;
+:Начать параллельный блок с omp parallel;
+:Получить thread_id = omp_get_thread_num();
+if (thread_id < remainder) then (да)
+  :Корректировать диапазон строк;
+else (нет)
+  :Оставить диапазон строк без изменений;
+endif
+repeat
+    :Перебрать строки i от start_row до end_row;
+    repeat
+        :Перебрать столбцы j от 0 до size;
+        :Инициализировать элемент resultMatrix[i][j] = 0;
+        repeat
+            :Перебрать элементы строки/столбца k от 0 до size;
+            :Выполнить resultMatrix[i][j] += firstMatrix[i][k] * secondMatrix[k][j];
+        repeat while (k < size)
+    repeat while (j < size)
+repeat while (i < end_row)
+:Завершить параллельный блок;
+stop
+@enduml
