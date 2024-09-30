@@ -8,8 +8,6 @@
 #define SIZE 4
 
 int main() {
-   srand(time(0));
-
    Matrix firstMatrix(SIZE), secondMatrix(SIZE);
    Matrix result_serial(SIZE), result_parallel_for(SIZE),
        result_parallel_manual(SIZE);

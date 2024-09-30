@@ -1,8 +1,6 @@
 #ifndef MATRIX_CPP
 #define MATRIX_CPP
 
-#include <cstdlib>
-#include <ctime>
 #include <iostream>
 
 class Matrix {
