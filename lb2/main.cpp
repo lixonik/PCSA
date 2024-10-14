@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-void sequentialSelectionSort(std::vector<int>& arr) {
+void sequential_selection_sort(std::vector<int>& arr) {
    int n = arr.size();
    for (int i = 0; i < n - 1; i++) {
       int minIndex = i;
@@ -19,7 +19,7 @@ void sequentialSelectionSort(std::vector<int>& arr) {
    }
 }
 
-int smallest(int* arr, int start, int size) {
+int get_local_minimum(int* arr, int start, int size) {
    int minIdx = start;
    for (int i = start + 1; i < size; i++) {
       if (arr[minIdx] > arr[i]) minIdx = i;
@@ -28,8 +28,8 @@ int smallest(int* arr, int start, int size) {
    return arr[start];
 }
 
-void parallelSelectionSort(std::vector<int>& arr, int rank, int size,
-                           int world_size) {
+void parallel_selection_sort(std::vector<int>& arr, int rank, int size,
+                             int world_size) {
    int n = arr.size();
    int local_size = n / world_size;
 
@@ -39,7 +39,7 @@ void parallelSelectionSort(std::vector<int>& arr, int rank, int size,
                MPI_INT, 0, MPI_COMM_WORLD);
 
    // Local sorting for each part of the array
-   int local_min = smallest(local_data.data(), 0, local_size);
+   int local_min = get_local_minimum(local_data.data(), 0, local_size);
 
    int global_min;
    int process_num;
@@ -67,7 +67,7 @@ void parallelSelectionSort(std::vector<int>& arr, int rank, int size,
       MPI_Bcast(&process_num, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
       if (rank == process_num) {
-         local_min = smallest(
+         local_min = get_local_minimum(
              local_data.data(), 1,
              local_size);  // Updating the minimum element for this process
       }
@@ -130,11 +130,12 @@ int main(int argc, char** argv) {
 
       // Measure the running time of the sequential algorithm
       double sequential_time =
-          measure_time([&]() { sequentialSelectionSort(data); });
+          measure_time([&]() { sequential_selection_sort(data); });
 
       // Measure the running time of the parallel algorithm
-      double parallel_time = measure_time(
-          [&]() { parallelSelectionSort(parallel_data, rank, n, world_size); });
+      double parallel_time = measure_time([&]() {
+         parallel_selection_sort(parallel_data, rank, n, world_size);
+      });
 
       if (rank == 0) {
          std::ofstream outfile(output_path, std::ios_base::app);

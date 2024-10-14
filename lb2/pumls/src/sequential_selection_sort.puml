@@ -1,0 +1,20 @@
+@startuml Последовательный алгоритм сортировки выбором
+start
+:Получение массива данных;
+:Установка n = размер массива;
+
+repeat
+  :Установка i = 0;
+  :Установка minIndex = i;
+  repeat
+    :Для каждого j от i+1 до n;
+    if (arr[j] < arr[minIndex]?) then (да)
+      :minIndex = j;
+    endif
+  repeat while (j < n)
+  :Обмен arr[i] и arr[minIndex];
+  :i = i + 1;
+repeat while (i < n - 1)
+:Массив отсортирован;
+stop
+@enduml
