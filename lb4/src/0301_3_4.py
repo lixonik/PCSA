@@ -7,11 +7,11 @@ plt.figure(figsize=(10, 6))
 
 for threads in [1, 2, 4, 8]:
     subset = data[data["Threads"] == threads]
-    plt.plot(subset["Size"], subset["Time"], label=f'Threads={threads}')
+    plt.plot(subset["Size"], subset["Time"], label=f'Количество потоков = {threads}')
 
-plt.xlabel('Size of the system')
-plt.ylabel('Time (seconds)')
-plt.title('Time to solve Ax = b using Gauss-Jordan')
+plt.xlabel('Размерность СЛАУ')
+plt.ylabel('Время (секунды)')
+plt.title('Время решения СЛАУ методом Гаусса-Жордана')
 plt.legend()
 plt.grid(True)
 plt.show()

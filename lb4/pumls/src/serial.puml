@@ -1,0 +1,13 @@
+@startuml Gauss-Jordan Serial Method
+start
+:Initialize matrix A and vector b;
+:For i = 0 to n-1;
+  :Pivot = A[i][i];
+  :Normalize row i;
+  :For j = 0 to n-1;
+    if (i != j) then (yes)
+      :Eliminate element A[j][i];
+    endif
+:Return solution vector b;
+stop
+@enduml

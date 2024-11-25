@@ -1,5 +1,6 @@
 #include <mpi.h>
 #include <chrono>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -13,6 +14,23 @@ double measure_time(Function fn) {
    return duration.count();
 }
 
+void print_matrix(const std::vector<std::vector<double>>& A) {
+   int n = A.size();
+   for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
+         std::cout << A[i][j] << " ";
+      }
+      std::cout << std::endl;
+   }
+}
+
+void print_solution(const std::vector<double>& b) {
+   for (const double& value : b) {
+      std::cout << value << " ";
+   }
+   std::cout << std::endl;
+}
+
 void gauss_jordan_serial(std::vector<std::vector<double>>& A,
                          std::vector<double>& b) {
    int n = A.size();
@@ -24,6 +42,13 @@ void gauss_jordan_serial(std::vector<std::vector<double>>& A,
       }
       b[i] /= pivot;
 
+      std::cout << std::endl
+                << "Step " << i + 1 << " (Serial) - Matrix A:" << std::endl;
+      print_matrix(A);
+      std::cout << std::endl
+                << "Step " << i + 1 << " (Serial) - Solution b:" << std::endl;
+      print_solution(b);
+
       for (int j = 0; j < n; ++j) {
          if (i != j) {
             double factor = A[j][i];
@@ -33,6 +58,13 @@ void gauss_jordan_serial(std::vector<std::vector<double>>& A,
             b[j] -= b[i] * factor;
          }
       }
+
+      std::cout << "Step " << i + 1
+                << " (Serial) - Updated Matrix A:" << std::endl;
+      print_matrix(A);
+      std::cout << "Step " << i + 1
+                << " (Serial) - Updated Solution b:" << std::endl;
+      print_solution(b);
    }
 }
 
@@ -48,6 +80,13 @@ void gauss_jordan_parallel(std::vector<std::vector<double>>& A,
          }
          b[i] /= pivot;
 
+         std::cout << "Step " << i + 1 << " (Parallel) - Rank " << rank
+                   << " - Matrix A:" << std::endl;
+         print_matrix(A);
+         std::cout << "Step " << i + 1 << " (Parallel) - Rank " << rank
+                   << " - Solution b:" << std::endl;
+         print_solution(b);
+
          for (int j = 0; j < n; ++j) {
             if (i != j) {
                double factor = A[j][i];
@@ -57,6 +96,15 @@ void gauss_jordan_parallel(std::vector<std::vector<double>>& A,
                b[j] -= b[i] * factor;
             }
          }
+
+         std::cout << std::endl
+                   << "Step " << i + 1 << " (Parallel) - Rank " << rank
+                   << " - Updated Matrix A:" << std::endl;
+         print_matrix(A);
+         std::cout << std::endl
+                   << "Step " << i + 1 << " (Parallel) - Rank " << rank
+                   << " - Updated Solution b:" << std::endl;
+         print_solution(b);
       }
       MPI_Barrier(MPI_COMM_WORLD);
    }
@@ -110,21 +158,58 @@ void write_to_csv(const std::string& filename,
    }
 }
 
+void demo() {
+   int n = 5;
+   int num_threads = 2;
+
+   std::cout << "Demonstrating Gauss-Jordan with n=" << n << " and "
+             << num_threads << " threads." << std::endl;
+
+   std::vector<std::vector<double>> A;
+   std::vector<double> b;
+
+   generate_random_system(n, A, b);
+
+   int rank, size;
+   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+   MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+   std::cout << "Running serial Gauss-Jordan..." << std::endl;
+   gauss_jordan_serial(A, b);
+   std::cout << "Running parallel Gauss-Jordan..." << std::endl;
+   gauss_jordan_parallel(A, b, rank, size);
+
+   std::cout << "Demo complete." << std::endl;
+}
+
 int main(int argc, char* argv[]) {
    MPI_Init(&argc, &argv);
 
-   std::vector<int> sizes = {5, 10, 100, 500, 1000};
-   std::vector<int> threads = {1, 2, 4, 8};
-   std::vector<std::vector<double>> results;
-
-   for (int n : sizes) {
-      for (int num_threads : threads) {
-         double time_taken = measure_time([&]() { run_test(n, num_threads); });
-         results.push_back({(double)n, (double)num_threads, time_taken});
+   bool is_demo = false;
+   for (int i = 1; i < argc; ++i) {
+      if (strcmp(argv[i], "demo") == 0) {
+         is_demo = true;
+         break;
       }
    }
 
-   write_to_csv("results.csv", results);
+   if (is_demo) {
+      demo();
+   } else {
+      std::vector<int> sizes = {5, 10, 100, 500, 1000};
+      std::vector<int> threads = {1, 2, 4, 8};
+      std::vector<std::vector<double>> results;
+
+      for (int n : sizes) {
+         for (int num_threads : threads) {
+            double time_taken =
+                measure_time([&]() { run_test(n, num_threads); });
+            results.push_back({(double)n, (double)num_threads, time_taken});
+         }
+      }
+
+      write_to_csv("results.csv", results);
+   }
 
    MPI_Finalize();
    return 0;
