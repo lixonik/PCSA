@@ -1,0 +1,20 @@
+@startuml sequential
+start
+:Инициализация L как нулевой матрицы;
+:Запуск внешнего цикла по i от 0 до n-1;
+while (i < n) is (true)
+    :Запуск внутреннего цикла по j от 0 до i;
+    while (j <= i) is (true)
+        :Инициализация переменной sum = 0;
+        :Запуск цикла по k от 0 до j-1;
+        :Вычисление суммы: sum += L[i][k] * L[j][k];
+        :Проверка, если i == j;
+        if (i == j) then (yes)
+            :Вычисление L[i][j] = sqrt(A[i][i] - sum);
+        else (no)
+            :Вычисление L[i][j] = (A[i][j] - sum) / L[j][j];
+        endif
+    endwhile
+endwhile
+stop
+@enduml
