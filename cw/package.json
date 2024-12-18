@@ -1,0 +1,17 @@
+{
+  "name": "cw",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "services": "node index.js"
+  },
+  "keywords": [],
+  "author": "Boris Prokhorov",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "soap": "^1.1.7"
+  }
+}
