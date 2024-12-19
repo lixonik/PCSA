@@ -11,6 +11,7 @@ async function getSOAPData() {
     const args = { ubiNum: 42 };
     const result = await client.NumberToWordsAsync(args);
     console.log('SOAP Response:', result[0].NumberToWordsResult);
+    console.log('SOAP Response:', result);
   } catch (error) {
     console.error('SOAP Error:', error);
   }
